@@ -2,11 +2,14 @@
 # install.packages('data.table')
 # install.packages('reshape2')
 # install.packages('ggplot2')
+# install.packages("rvest")
 
 library(recommenderlab)
 library(data.table)
 library(reshape2)
 library(ggplot2)
+library(rvest)
+library(dplyr)
 
 # Read in the movies and ratings data sets
 movies <- read.csv("data/movies.csv", stringsAsFactors = FALSE)
@@ -47,23 +50,32 @@ for (c in 1:ncol(genre_matrix)) {
 
 # Create search matrix
 
+search_matrix <- matrix(0, 9126, 18)
 
 # Create ratings matrix. Rows = userId, Columns = movieId
 
+user_col <- nrow(distinct(ratings, userId))
+
+movie_col <- nrow(distinct(ratings, movieId))
+
+ratings_matrix <- matrix(0, user_col, movie_col)
+
 # Remove userId's
+ratings_matrix <- as.data.frame(ratings_matrix[-1,], stringsAsFactors = FALSE)
+
 
 # Convert rating matrix into a recommenderlab sparse matrix
-
+sparse_matrix <- sparseMatrix(user_col, movie_col)
 
 # Selecting relevant data
 # Select minimum number of users per rated movie
 # and the minimum views per user
-
+filter_ratings <- group_by(ratings, userId) %>% summarise(n = n()) %>% filter(n == min(n))
 
 # Normalize the data
 # Remove bias instances of data 
 # Averages the rating for each user to 0
-
+normal_filter <- normalize(filter_ratings, method = "standardize", range = c(0, 1), margin = 1L)
 
 
 # Define training and set data
